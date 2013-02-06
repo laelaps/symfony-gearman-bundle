@@ -1,6 +1,6 @@
 services:
 
-    lealaps.gearman-client:
+    lealaps.gearman.client:
         class: GearmanClient
         calls:
             - [ addServers, [ %gearman_servers% ] ]
