@@ -17,6 +17,7 @@
 ``` yaml
 parameters:
     # delimit server names with comma (",")
+    # see: http://www.php.net/manual/ru/gearmanclient.addservers.php
     gearman_servers: localhost:4730
 ```
 
