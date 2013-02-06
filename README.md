@@ -12,21 +12,6 @@
 }
 ```
 
-### app/AppKernel.php
-
-``` php
-<?php
-
-public function registerBundles()
-{
-    $bundles = array(
-        // ...
-        new Laelaps\GearmanBundle\GearmanBundle(),
-        // ...
-    );
-}
-```
-
 ### paramaters.yml
 
 ``` yaml
@@ -35,7 +20,9 @@ parameters:
     gearman_servers: localhost:4730
 ```
 
+### app/AppKernel.php
 
+``` php
 <?php
 
 public function registerBundles()
