@@ -83,6 +83,7 @@ class ExampleController
 {
     public function exampleAction()
     {
+        // job name taken from PointOfEntry annotation
         $this->get('laelaps.gearman.client')->doBackground('example_job_name', $optionalWorkload = '');
     }
 }
