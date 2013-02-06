@@ -27,6 +27,27 @@ public function registerBundles()
 }
 ```
 
+### paramaters.yml
+
+``` yaml
+parameters:
+    # delimit server names with comma (",")
+    gearman_servers: localhost:4730
+```
+
+
+<?php
+
+public function registerBundles()
+{
+    $bundles = array(
+        // ...
+        new Laelaps\GearmanBundle\GearmanBundle(),
+        // ...
+    );
+}
+```
+
 ## Examples
 
 ### Worker
