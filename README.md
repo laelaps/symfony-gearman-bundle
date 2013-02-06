@@ -39,7 +39,6 @@ public function registerBundles()
 use GearmanJob;
 use Laelaps\GearmanBundle\Annotation as Gearman;
 use Laelaps\GearmanBundle\Worker;
-use Laelaps\GearmanBundle\Worker;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ExampleWorker extends Worker
@@ -50,7 +49,7 @@ class ExampleWorker extends Worker
      * @param Symfony\Component\Console\Output\OutputInterface $output
      * @return boolean returning false means job failure
      */
-    public function registerBundles(GearmanJob $job, OutputInterface $output)
+    public function doExampleJob(GearmanJob $job, OutputInterface $output)
     {
         // do your job
     }
@@ -60,13 +59,19 @@ class ExampleWorker extends Worker
 ### Running worker
 
 ```
-$ ./app/console gearman:worker:run AcmeDemoBundle\Worker\ExampleWorker.php
+$ ./app/console gearman:worker:run ./src/AcmeDemoBundle/Worker/ExampleWorker.php
 ```
 
-Wildcard is also available:
+Wildcard is also available (not recommended but possible - results in single process for multiple workers):
 
 ```
-$ ./app/console gearman:worker:run "AcmeDemoBundle\Worker\*.php"
+$ ./app/console gearman:worker:run "./src/AcmeDemoBundle/Worker/*.php"
+```
+
+Runs all workers from all bundles:
+
+```
+$ ./app/console gearman:worker:run "./src/*/Worker/*.php"
 ```
 
 ### Calling job from controller
@@ -78,7 +83,7 @@ class ExampleController
 {
     public function exampleAction()
     {
-        $this->get('laelaps.gearman.client')->doBackground('example_job_name');
+        $this->get('laelaps.gearman.client')->doBackground('example_job_name', $optionalWorkload = '');
     }
 }
 ```
@@ -87,4 +92,8 @@ class ExampleController
 
 ```
 $ ./app/console gearman:job:run example_job_name
+```
+
+```
+$ ./app/console gearman:job:run example_job_name optional_workload_string
 ```
