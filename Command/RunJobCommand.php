@@ -40,7 +40,7 @@ class RunJobCommand extends ContainerAwareCommand
         $jobName = $input->getArgument(self::ARGUMENT_JOB_NAME);
         $jobData = $input->getArgument(self::ARGUMENT_JOB_DATA);
 
-        $gmclient = $this->getContainer()->get('absolvent.gearman');
+        $gmclient = $this->getContainer()->get('laelaps.gearman.client');
         $jobHandle = $gmclient->doBackground($jobName, $jobData);
 
         $returnCode = $gmclient->returnCode();

@@ -20,6 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class RunWorkerCommand extends ContainerAwareCommand
 {
     const ARGUMENT_WORKER_FILENAME = 'filename';
+    const GEARMAN_SERVERS_PARAMETER_KEY = 'gearman_servers';
     const WORKER_CLASS_NAME = 'Laelaps\GearmanBundle\Worker';
 
     /**
@@ -47,7 +48,12 @@ class RunWorkerCommand extends ContainerAwareCommand
         }
 
         $gmworker= new GearmanWorker();
-        $gmworker->addServer();
+        if ($this->container->hasParameter(self::GEARMAN_SERVERS_PARAMETER_KEY)) {
+            $gmworker->addServers($this->container->getParameter(self::GEARMAN_SERVERS_PARAMETER_KEY));
+        } else {
+            // add default server
+            $gmworker->addServer();
+        }
 
         foreach ($workerFiles as $workerFilename) {
             $worker = $this->instanciateWorker($workerFilename, $output);
