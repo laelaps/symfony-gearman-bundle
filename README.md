@@ -17,6 +17,7 @@
 ``` yaml
 parameters:
     # delimit server names with comma (",")
+    # see: http://www.php.net/manual/ru/gearmanclient.addservers.php
     gearman_servers: localhost:4730
 ```
 
@@ -43,6 +44,8 @@ public function registerBundles()
 <?php
 
 // AcmeDemoBundle\Worker\ExampleWorker.php
+
+namespace AcmeDemoBundle\Worker;
 
 use GearmanJob;
 use Laelaps\GearmanBundle\Annotation as Gearman;
