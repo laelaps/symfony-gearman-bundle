@@ -43,7 +43,7 @@ class RunWorkerCommand extends ContainerAwareCommand
         $workerFilenamePattern = $input->getArgument(self::ARGUMENT_WORKER_FILENAME);
         $workerFiles = glob($workerFilenamePattern);
         if (empty($workerFiles)) {
-            return;
+            throw new RuntimeException(sprintf('No filename matching "%s" glob pattern found.', $workerFilenamePattern));
         }
 
         $gmworker= new GearmanWorker();

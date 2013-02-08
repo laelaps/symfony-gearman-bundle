@@ -12,6 +12,14 @@
 }
 ```
 
+### paramaters.yml
+
+``` yaml
+parameters:
+    # delimit server names with comma (",")
+    gearman_servers: localhost:4730
+```
+
 ### app/AppKernel.php
 
 ``` php
