@@ -48,8 +48,8 @@ class RunWorkerCommand extends ContainerAwareCommand
         }
 
         $gmworker= new GearmanWorker();
-        if ($this->container->hasParameter(self::GEARMAN_SERVERS_PARAMETER_KEY)) {
-            $gmworker->addServers($this->container->getParameter(self::GEARMAN_SERVERS_PARAMETER_KEY));
+        if ($this->getContainer()->hasParameter(self::GEARMAN_SERVERS_PARAMETER_KEY)) {
+            $gmworker->addServers($this->getContainer()->getParameter(self::GEARMAN_SERVERS_PARAMETER_KEY));
         } else {
             // add default server
             $gmworker->addServer();
