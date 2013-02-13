@@ -155,9 +155,14 @@ class RunWorkerCommand extends ContainerAwareCommand
                 if ($annotation instanceof Annotation\PointOfEntry) {
                     $hasPointOfEntryAnnotation = true;
                     $gmworker->addFunction($annotation->name, function (GearmanJob $gearmanJob) use ($output, $reflectionMethod, $worker) {
+                        gc_enable();
+
                         $taskReturnStatus = $worker->{$reflectionMethod->name}($gearmanJob, $output);
                         // GOTCHA: null means success
                         (false === $taskReturnStatus) ? $gearmanJob->sendFail() : $gearmanJob->sendComplete($taskReturnStatus);
+
+                        gc_collect_cycles();
+                        gc_disable();
 
                         return $taskReturnStatus;
                     });
