@@ -4,7 +4,7 @@ namespace Laelaps\GearmanBundle\Command;
 
 use GearmanJob;
 use GearmanWorker;
-use Laelaps\GearmanBundle\Annotation;
+use Laelaps\GearmanBundle\Annotation\PointOfEntry as PointOfEntryAnnotation;
 use Laelaps\GearmanBundle\Worker;
 use ReflectionMethod;
 use ReflectionObject;
@@ -22,6 +22,11 @@ class RunWorkerCommand extends ContainerAwareCommand
     const ARGUMENT_WORKER_FILENAME = 'filename';
     const GEARMAN_SERVERS_PARAMETER_KEY = 'gearman_servers';
     const WORKER_CLASS_NAME = 'Laelaps\GearmanBundle\Worker';
+
+    /**
+     * @var boolean
+     */
+    protected $shouldStop = false;
 
     /**
      * @return void
@@ -47,9 +52,10 @@ class RunWorkerCommand extends ContainerAwareCommand
             throw new RuntimeException(sprintf('No filename matching "%s" glob pattern found.', $workerFilenamePattern));
         }
 
-        $gmworker= new GearmanWorker();
-        if ($this->getContainer()->hasParameter(self::GEARMAN_SERVERS_PARAMETER_KEY)) {
-            $gmworker->addServers($this->getContainer()->getParameter(self::GEARMAN_SERVERS_PARAMETER_KEY));
+        $gmworker = new GearmanWorker();
+        $container = $this->getContainer();
+        if ($container->hasParameter(self::GEARMAN_SERVERS_PARAMETER_KEY)) {
+            $gmworker->addServers($container->getParameter(self::GEARMAN_SERVERS_PARAMETER_KEY));
         } else {
             // add default server
             $gmworker->addServer();
@@ -60,11 +66,7 @@ class RunWorkerCommand extends ContainerAwareCommand
             $this->registerWorker($worker, $gmworker, $output);
         }
 
-        while ($gmworker->work()) {
-            if (GEARMAN_SUCCESS !== $gmworker->returnCode()) {
-                break;
-            }
-        }
+        while (!$this->shouldStop && $gmworker->work()) {}
     }
 
     /**
@@ -91,6 +93,32 @@ class RunWorkerCommand extends ContainerAwareCommand
         $container = $this->getContainer();
 
         return new $className($container);
+    }
+
+    /**
+     * @param Laelaps\GearmanBundle\Worker $worker
+     * @param Symfony\Component\Console\Output\OutputInterface $output
+     * @return array [ point of entry name => callable point of entry ]
+     * @throws RuntimeException
+     */
+    public function readPointsOfEntry(Worker $worker, OutputInterface $output)
+    {
+        $annotationReader = $this->getContainer()->get('annotation_reader');
+
+        $pointsOfEntry = [];
+
+        $workerReflection = new ReflectionObject($worker);
+        $workerReflectionMethods = $workerReflection->getMethods(ReflectionMethod::IS_PUBLIC);
+
+        foreach ($workerReflectionMethods as $reflectionMethod) {
+            foreach ($annotationReader->getMethodAnnotations($reflectionMethod) as $annotation) {
+                if ($annotation instanceof PointOfEntryAnnotation) {
+                    $pointsOfEntry[$annotation->name] = [$worker, $reflectionMethod->name];
+                }
+            }
+        }
+
+        return $pointsOfEntry;
     }
 
     /**
@@ -144,35 +172,28 @@ class RunWorkerCommand extends ContainerAwareCommand
      */
     public function registerWorker(Worker $worker, GearmanWorker $gmworker, OutputInterface $output)
     {
-        $annotationReader = $this->getContainer()->get('annotation_reader');
-
-        $workerReflection = new ReflectionObject($worker);
-        $workerReflectionMethods = $workerReflection->getMethods(ReflectionMethod::IS_PUBLIC);
-
-        $hasPointOfEntryAnnotation = false;
-        foreach ($workerReflectionMethods as $reflectionMethod) {
-            foreach ($annotationReader->getMethodAnnotations($reflectionMethod) as $annotation) {
-                if ($annotation instanceof Annotation\PointOfEntry) {
-                    $hasPointOfEntryAnnotation = true;
-                    $gmworker->addFunction($annotation->name, function (GearmanJob $gearmanJob) use ($output, $reflectionMethod, $worker) {
-                        gc_enable();
-
-                        $taskReturnStatus = $worker->{$reflectionMethod->name}($gearmanJob, $output);
-                        // GOTCHA: null means success
-                        (false === $taskReturnStatus) ? $gearmanJob->sendFail() : $gearmanJob->sendComplete($taskReturnStatus);
-
-                        gc_collect_cycles();
-                        gc_disable();
-
-                        return $taskReturnStatus;
-                    });
-                    $output->writeln(sprintf('Registered "%s" function pointing to "%s::%s".', $annotation->name, get_class($worker), $reflectionMethod->name));
-                }
-            }
+        $pointsOfEntry = $this->readPointsOfEntry($worker, $output);
+        if (empty($pointsOfEntry)) {
+            throw new RuntimeException(sprintf('No "PointOfEntry" annotations found in public methods of "%s".', get_class($worker)));
         }
 
-        if (!$hasPointOfEntryAnnotation) {
-            throw new RuntimeException(sprintf('No "PointOfEntry" annotations found in public methods of "%s".', get_class($worker)));
+        foreach ($pointsOfEntry as $entryPointName => $entryPoint) {
+            $gmworker->addFunction($entryPointName, function (GearmanJob $gearmanJob) use ($entryPoint, $output) {
+                gc_enable();
+
+                $taskReturnStatus = $entryPoint($gearmanJob, $output);
+
+                // GOTCHA: null means success
+                (false === $taskReturnStatus) ? $gearmanJob->sendFail() : $gearmanJob->sendComplete($taskReturnStatus);
+
+                gc_collect_cycles();
+                gc_disable();
+
+                return $taskReturnStatus;
+            });
+
+            $entryPointTarget = implode('::', [get_class($entryPoint[0]), $entryPoint[1]]);
+            $output->writeln(sprintf('Registered "%s" function pointing to "%s".', $entryPointName, $entryPointTarget));
         }
     }
 }
