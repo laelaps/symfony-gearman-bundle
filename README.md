@@ -36,6 +36,12 @@ public function registerBundles()
 }
 ```
 
+## Worker supervisor cron tool
+
+There is a simple supervisor bash script available. For instructions, see: 
+
+https://github.com/laelaps/symfony-gearman-bundle/issues/2#issuecomment-16257507
+
 ## Examples
 
 ### Worker
