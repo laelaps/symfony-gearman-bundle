@@ -15,8 +15,8 @@
     "require": {
         "ext-gearman": "*",
         "php": ">=5.4.0",
-        "symfony/console": ">=2.1.0,<2.3-dev",
-        "symfony/framework-bundle": ">=2.1.0,<2.3-dev"
+        "symfony/console": "~2.1",
+        "symfony/framework-bundle": "~2.1"
     },
     "autoload": {
         "psr-0": { "Laelaps\\GearmanBundle": "" }
