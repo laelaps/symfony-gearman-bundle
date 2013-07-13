@@ -39,7 +39,7 @@ abstract class Worker implements ContainerAwareInterface
      * @param boolean $absolute
      * @return string
      */
-    public function generateUrl($route, $parameters = [], $absolute = false)
+    public function generateUrl($route, $parameters = array(), $absolute = false)
     {
         return $this->container->get('router')->generate($route, $parameters, $absolute);
     }

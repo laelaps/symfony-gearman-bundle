@@ -105,7 +105,7 @@ class RunWorkerCommand extends ContainerAwareCommand
     {
         $annotationReader = $this->getContainer()->get('annotation_reader');
 
-        $pointsOfEntry = [];
+        $pointsOfEntry = array();
 
         $workerReflection = new ReflectionObject($worker);
         $workerReflectionMethods = $workerReflection->getMethods(ReflectionMethod::IS_PUBLIC);
@@ -113,7 +113,7 @@ class RunWorkerCommand extends ContainerAwareCommand
         foreach ($workerReflectionMethods as $reflectionMethod) {
             foreach ($annotationReader->getMethodAnnotations($reflectionMethod) as $annotation) {
                 if ($annotation instanceof PointOfEntryAnnotation) {
-                    $pointsOfEntry[$annotation->name] = [$worker, $reflectionMethod->name];
+                    $pointsOfEntry[$annotation->name] = array($worker, $reflectionMethod->name);
                 }
             }
         }
@@ -156,7 +156,7 @@ class RunWorkerCommand extends ContainerAwareCommand
                 }
             }
             if (isset($className) && isset($namespace)) {
-                return implode('\\', [$namespace, $className]);
+                return implode('\\', array($namespace, $className));
             }
         }
 
@@ -192,7 +192,7 @@ class RunWorkerCommand extends ContainerAwareCommand
                 return $taskReturnStatus;
             });
 
-            $entryPointTarget = implode('::', [get_class($entryPoint[0]), $entryPoint[1]]);
+            $entryPointTarget = implode('::', array(get_class($entryPoint[0]), $entryPoint[1]));
             $output->writeln(sprintf('Registered "%s" function pointing to "%s".', $entryPointName, $entryPointTarget));
         }
     }
