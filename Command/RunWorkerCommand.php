@@ -181,7 +181,7 @@ class RunWorkerCommand extends ContainerAwareCommand
             $gmworker->addFunction($entryPointName, function (GearmanJob $gearmanJob) use ($entryPoint, $output) {
                 gc_enable();
 
-                $taskReturnStatus = $entryPoint($gearmanJob, $output);
+                $taskReturnStatus = call_user_func_array(array($entryPoint[0], $entryPoint[1]), array($gearmanJob, $output));
 
                 // GOTCHA: null means success
                 (false === $taskReturnStatus) ? $gearmanJob->sendFail() : $gearmanJob->sendComplete($taskReturnStatus);
