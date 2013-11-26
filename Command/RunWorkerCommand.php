@@ -46,24 +46,50 @@ class RunWorkerCommand extends ContainerAwareCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $workerFilenamePattern = $input->getArgument(self::ARGUMENT_WORKER_FILENAME);
-        $workerFiles = glob($workerFilenamePattern);
-        if (empty($workerFiles)) {
-            throw new RuntimeException(sprintf('No filename matching "%s" glob pattern found.', $workerFilenamePattern));
-        }
-
-        $gmworker = new GearmanWorker();
         $container = $this->getContainer();
-        if ($container->hasParameter(self::GEARMAN_SERVERS_PARAMETER_KEY)) {
-            $gmworker->addServers($container->getParameter(self::GEARMAN_SERVERS_PARAMETER_KEY));
-        } else {
-            // add default server
-            $gmworker->addServer();
-        }
+        $gmworker = $container->get('laelaps.gearman.worker');
+        $filename = $input->getArgument(self::ARGUMENT_WORKER_FILENAME);
 
-        foreach ($workerFiles as $workerFilename) {
-            $worker = $this->instanciateWorker($workerFilename, $output);
+        /**
+         * Load controller-style
+         */
+        if (strpos($filename, ':') !== false) {
+
+            $kernel = $container->get('kernel');
+            $class = null;
+            list($bundleName, $className) = explode(':',$filename, 2);
+
+            foreach ($kernel->getBundle($bundleName, false) as $bundle) {
+                $try = $bundle->getNamespace().'\\Worker\\'.$className;
+
+                if (class_exists($try)) {
+                    $class = $try;
+                    break;
+                }
+            }
+
+            if ($class === null) {
+                throw new \InvalidArgumentException(sprintf('Could not find worker "%s"', $filename));
+            }
+
+            // Good, register worker
+            $worker = new $class($container);
             $this->registerWorker($worker, $gmworker, $output);
+
+        /**
+         * Load from Glob
+         */
+        } else {
+            $workerFiles = glob($filename);
+
+            if (empty($workerFiles)) {
+                throw new RuntimeException(sprintf('No filename matching "%s" glob pattern found.', $workerFilenamePattern));
+            }
+
+            foreach ($workerFiles as $workerFilename) {
+                $worker = $this->instantiateWorker($workerFilename, $output);
+                $this->registerWorker($worker, $gmworker, $output);
+            }
         }
 
         while (!$this->shouldStop && $gmworker->work()) {}
@@ -74,7 +100,7 @@ class RunWorkerCommand extends ContainerAwareCommand
      * @param Symfony\Component\Console\Output\OutputInterface $output
      * @return Laelaps\GearmanBundle\Worker
      */
-    public function instanciateWorker($filename, OutputInterface $output)
+    public function instantiateWorker($filename, OutputInterface $output)
     {
         $className = $this->readWorkerClassName($filename, $output);
 
