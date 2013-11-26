@@ -1,6 +1,6 @@
 services:
-
     laelaps.gearman.client:
         class: GearmanClient
-        calls:
-            - [ addServers, [ %gearman_servers% ] ]
+    laelaps.gearman.worker:
+        class: GearmanWorker
+        scope: prototype
