@@ -1,0 +1,13 @@
+parameters:
+    gearman.data_collector.class: Laelaps\GearmanBundle\DataCollector\GearmanDataCollector
+    gearman.data_collector.template: "LaelapsGearmanBundle:Collector:gearman"
+
+services:
+    laelaps.gearman.client:
+        class: Laelaps\GearmanBundle\LogClient
+        
+    gearman.data_collector:
+        class: %gearman.data_collector.class%
+        tags:
+            - { name: data_collector, template: %gearman.data_collector.template%, id:"gearman"}
+        arguments: [ "@laelaps.gearman.client" ]

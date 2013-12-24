@@ -1,0 +1,53 @@
+{% extends 'WebProfilerBundle:Profiler:layout.html.twig' %}
+
+{% block toolbar %}
+    {# the web debug toolbar content #}
+    {% set icon %}
+        <img alt="Gearman" src="data:image/png;base64,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" />
+        <span class="sf-toolbar-status">{{ collector.requestcount }}</span>
+    {% endset %}
+    {% set text %}
+        <div class="sf-toolbar-info-piece">
+            <b>Gearman requests</b>
+            <span>{{ collector.requestcount }}</span>
+        </div>
+        <div class="sf-toolbar-info-piece">
+            <b>Response time</b>
+            <span>{{ '%0.2f'|format(collector.time * 1000) }} ms</span>
+        </div>
+{% endset %}
+    {% include 'WebProfilerBundle:Profiler:toolbar_item.html.twig' with { 'link': profiler_url } %}
+{% endblock %}
+
+{% block menu %}
+    {# the menu content #}
+    <span class="label">
+        <span class="icon"><img src="{{ asset('bundles/laelapsgearman/images/gearman.png') }}" alt="" /></span>
+        <strong>Gearman</strong>
+        <span class="count">
+            <span>{{ collector.requestcount }}</span>
+            <span>{{ '%0.0f'|format(collector.time * 1000) }} ms</span>
+        </span>
+    </span>
+{% endblock %}
+
+{% block panel %}
+  <h2>Gearman</h2>
+  <h3>Statistics</h3>
+  <table>
+    <thead><tr>
+      <th>Worker</th>
+      <th>Priority</th>
+      <th>Time (ms)</th>
+      <th>Response</th>
+    </tr></thead>
+    <tbody><tr>
+    {% for call in collector.calls %}
+      <td>{{ call.workload[0] }}</td>
+      <td>{{ call.name }}</td>
+      <td>{{ '%0.2f'|format(call.time * 1000) }}</td>
+      <td>{{ call.result }}</td>
+    {% endfor %}
+    </tr></tbody>
+  </table>
+{% endblock %}

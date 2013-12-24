@@ -37,7 +37,7 @@ public function registerBundles()
 {
     $bundles = array(
         // ...
-        new Laelaps\GearmanBundle\GearmanBundle(),
+        new Laelaps\GearmanBundle\LaelapsGearmanBundle(),
         // ...
     );
 }

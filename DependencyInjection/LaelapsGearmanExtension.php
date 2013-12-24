@@ -1,11 +1,11 @@
 <?php
-
 namespace Laelaps\GearmanBundle\DependencyInjection;
 
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use \Symfony\Component\Config\FileLocator,
+  \Symfony\Component\DependencyInjection\ContainerBuilder,
+  \Symfony\Component\DependencyInjection\Loader\YamlFileLoader,
+  \Symfony\Component\DependencyInjection\Reference,
+  \Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 class LaelapsGearmanExtension extends Extension
 {
@@ -23,6 +23,10 @@ class LaelapsGearmanExtension extends Extension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
 
+        if ($container->getParameter('kernel.debug')) {
+            $loader->load('debug.yml');
+        }
+        
         $servers = $config['servers'];
         $container->setParameter('laelaps_gearman.servers', $servers);
 
