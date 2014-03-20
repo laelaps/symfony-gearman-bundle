@@ -189,6 +189,19 @@ class RunWorkerCommand extends ContainerAwareCommand
         return null;
     }
 
+    protected function getManager()
+    {
+        return $this->getContainer()->get('doctrine')->getManager();
+    }
+
+    /**
+     * @return \Laelaps\GearmanBundle\Entity\Job
+     */
+    protected function createJob()
+    {
+        return new \Laelaps\GearmanBundle\Entity\Job();
+    }
+
     /**
      * @param Laelaps\GearmanBundle\Worker $worker
      * @param GearmanWorker $gmworker
@@ -204,13 +217,35 @@ class RunWorkerCommand extends ContainerAwareCommand
         }
 
         foreach ($pointsOfEntry as $entryPointName => $entryPoint) {
-            $gmworker->addFunction($entryPointName, function (GearmanJob $gearmanJob) use ($entryPoint, $output) {
+            $gmworker->addFunction($entryPointName, function (GearmanJob $gearmanJob) use ($entryPoint, $entryPointName, $output) {
                 gc_enable();
 
-                $taskReturnStatus = call_user_func_array(array($entryPoint[0], $entryPoint[1]), array($gearmanJob, $output));
+                // Add a new job
+                $job = $this->createJob();
+                $job->setName($entryPointName);
+                $job->setStartTime(new \DateTime());
+
+                $manager = $this->getManager();
+                $manager->persist($job);
+                $manager->flush($job);
+
+                try {
+                    ob_start();
+                    $taskReturnStatus = call_user_func_array(array($entryPoint[0], $entryPoint[1]), array($gearmanJob, $output));
+                    $output = ob_get_clean();
+                } catch (\Exception $e) {
+                    $output = ob_get_clean();
+
+                    $job->setErrorOutput($e->getMessage());
+                }
 
                 // GOTCHA: null means success
                 (false === $taskReturnStatus) ? $gearmanJob->sendFail() : $gearmanJob->sendComplete($taskReturnStatus);
+
+                $job->setEndTime(new \DateTime());
+                $job->setReturnStatus($taskReturnStatus);
+                $job->setOutput($output);
+                $manager->flush($job);
 
                 gc_collect_cycles();
                 gc_disable();
