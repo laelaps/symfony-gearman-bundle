@@ -63,6 +63,12 @@ class Job
      */
     private $errorOutput;
 
+    /**
+     * @var type
+     *
+     * @ORM\Column(name="workload", type="text", nullable=true)
+     */
+    private $workload;
 
     /**
      * Get id
@@ -134,6 +140,15 @@ class Job
         $this->endTime = $endTime;
 
         return $this;
+    }
+
+    public function getRunningTime()
+    {
+        if ($this->startTime === null || $this->endTime === null) {
+            return null;
+        }
+
+        return date_diff($this->startTime, $this->endTime);
     }
 
     /**
@@ -216,6 +231,25 @@ class Job
     public function getErrorOutput()
     {
         return $this->errorOutput;
+    }
+
+    public function getWorkload($decode = false)
+    {
+        $workload = $this->workload;
+
+        if ($decode) {
+            $decoded = json_decode($workload, true);
+            $workload = $decoded === null ? $workload : $decoded;
+        }
+
+        return $workload;
+    }
+
+    public function setWorkload($workload)
+    {
+        $this->workload = $workload;
+
+        return $this;
     }
 }
 

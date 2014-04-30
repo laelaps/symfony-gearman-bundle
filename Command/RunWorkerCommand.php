@@ -224,6 +224,7 @@ class RunWorkerCommand extends ContainerAwareCommand
                 $job = $this->createJob();
                 $job->setName($entryPointName);
                 $job->setStartTime(new \DateTime());
+                $job->setWorkload($gearmanJob->workload());
 
                 $manager = $this->getManager();
                 $manager->persist($job);
