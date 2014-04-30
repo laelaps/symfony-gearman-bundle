@@ -46,24 +46,50 @@ class RunWorkerCommand extends ContainerAwareCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $workerFilenamePattern = $input->getArgument(self::ARGUMENT_WORKER_FILENAME);
-        $workerFiles = glob($workerFilenamePattern);
-        if (empty($workerFiles)) {
-            throw new RuntimeException(sprintf('No filename matching "%s" glob pattern found.', $workerFilenamePattern));
-        }
-
-        $gmworker = new GearmanWorker();
         $container = $this->getContainer();
-        if ($container->hasParameter(self::GEARMAN_SERVERS_PARAMETER_KEY)) {
-            $gmworker->addServers($container->getParameter(self::GEARMAN_SERVERS_PARAMETER_KEY));
-        } else {
-            // add default server
-            $gmworker->addServer();
-        }
+        $gmworker = $container->get('laelaps.gearman.worker');
+        $filename = $input->getArgument(self::ARGUMENT_WORKER_FILENAME);
 
-        foreach ($workerFiles as $workerFilename) {
-            $worker = $this->instanciateWorker($workerFilename, $output);
+        /**
+         * Load controller-style
+         */
+        if (strpos($filename, ':') !== false) {
+
+            $kernel = $container->get('kernel');
+            $class = null;
+            list($bundleName, $className) = explode(':',$filename, 2);
+
+            foreach ($kernel->getBundle($bundleName, false) as $bundle) {
+                $try = $bundle->getNamespace().'\\Worker\\'.$className;
+
+                if (class_exists($try)) {
+                    $class = $try;
+                    break;
+                }
+            }
+
+            if ($class === null) {
+                throw new \InvalidArgumentException(sprintf('Could not find worker "%s"', $filename));
+            }
+
+            // Good, register worker
+            $worker = new $class($container);
             $this->registerWorker($worker, $gmworker, $output);
+
+        /**
+         * Load from Glob
+         */
+        } else {
+            $workerFiles = glob($filename);
+
+            if (empty($workerFiles)) {
+                throw new RuntimeException(sprintf('No filename matching "%s" glob pattern found.', $workerFilenamePattern));
+            }
+
+            foreach ($workerFiles as $workerFilename) {
+                $worker = $this->instantiateWorker($workerFilename, $output);
+                $this->registerWorker($worker, $gmworker, $output);
+            }
         }
 
         while (!$this->shouldStop && $gmworker->work()) {}
@@ -74,7 +100,7 @@ class RunWorkerCommand extends ContainerAwareCommand
      * @param Symfony\Component\Console\Output\OutputInterface $output
      * @return Laelaps\GearmanBundle\Worker
      */
-    public function instanciateWorker($filename, OutputInterface $output)
+    public function instantiateWorker($filename, OutputInterface $output)
     {
         $className = $this->readWorkerClassName($filename, $output);
 
@@ -163,6 +189,19 @@ class RunWorkerCommand extends ContainerAwareCommand
         return null;
     }
 
+    protected function getManager()
+    {
+        return $this->getContainer()->get('doctrine')->getManager();
+    }
+
+    /**
+     * @return \Laelaps\GearmanBundle\Entity\Job
+     */
+    protected function createJob()
+    {
+        return new \Laelaps\GearmanBundle\Entity\Job();
+    }
+
     /**
      * @param Laelaps\GearmanBundle\Worker $worker
      * @param GearmanWorker $gmworker
@@ -178,13 +217,36 @@ class RunWorkerCommand extends ContainerAwareCommand
         }
 
         foreach ($pointsOfEntry as $entryPointName => $entryPoint) {
-            $gmworker->addFunction($entryPointName, function (GearmanJob $gearmanJob) use ($entryPoint, $output) {
+            $gmworker->addFunction($entryPointName, function (GearmanJob $gearmanJob) use ($entryPoint, $entryPointName, $output) {
                 gc_enable();
 
-                $taskReturnStatus = call_user_func_array(array($entryPoint[0], $entryPoint[1]), array($gearmanJob, $output));
+                // Add a new job
+                $job = $this->createJob();
+                $job->setName($entryPointName);
+                $job->setStartTime(new \DateTime());
+                $job->setWorkload($gearmanJob->workload());
+
+                $manager = $this->getManager();
+                $manager->persist($job);
+                $manager->flush($job);
+
+                try {
+                    ob_start();
+                    $taskReturnStatus = call_user_func_array(array($entryPoint[0], $entryPoint[1]), array($gearmanJob, $output));
+                    $output = ob_get_clean();
+                } catch (\Exception $e) {
+                    $output = ob_get_clean();
+
+                    $job->setErrorOutput($e->getMessage());
+                }
 
                 // GOTCHA: null means success
                 (false === $taskReturnStatus) ? $gearmanJob->sendFail() : $gearmanJob->sendComplete($taskReturnStatus);
+
+                $job->setEndTime(new \DateTime());
+                $job->setReturnStatus($taskReturnStatus);
+                $job->setOutput($output);
+                $manager->flush($job);
 
                 gc_collect_cycles();
                 gc_disable();

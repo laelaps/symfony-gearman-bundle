@@ -7,4 +7,4 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 /**
  * @author Mateusz Charytoniuk <mateusz.charytoniuk@absolvent.pl>
  */
-class GearmanBundle extends Bundle {}
+class LaelapsGearmanBundle extends Bundle {}

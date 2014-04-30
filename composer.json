@@ -1,5 +1,5 @@
 {
-    "name": "laelaps/symfony-gearman-bundle",
+    "name": "isometriks/symfony-gearman-bundle",
     "description": "Integrates Gearman into Symfony2",
     "keywords": ["symfony", "gearman", "bundle"],
     "homepage": "https://github.com/laelaps/symfony-gearman-bundle",
@@ -10,6 +10,10 @@
         {
             "name": "Mateusz Charytoniuk",
             "email": "mateusz.charytoniuk@absolvent.pl"
+        },
+        {
+            "name": "Craig Blanchette",
+            "email": "craig.blanchette@gmail.com"
         }
     ],
     "require": {

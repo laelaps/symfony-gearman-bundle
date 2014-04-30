@@ -12,14 +12,21 @@
 }
 ```
 
-### paramaters.yml
+### config.yml
 
 ``` yaml
-parameters:
-    # delimit server names with comma (",")
-    # see: http://www.php.net/manual/ru/gearmanclient.addservers.php
-    gearman_servers: localhost:4730
+laelaps_gearman:
+    servers:
+        - localhost:4730
 ```
+
+OR
+
+``` yaml
+laelaps_gearman:
+    servers: "localhost:4730,localhost:4731"
+```
+
 
 ### app/AppKernel.php
 
@@ -38,7 +45,7 @@ public function registerBundles()
 
 ## Worker supervisor cron tool
 
-There is a simple supervisor bash script available. For instructions, see: 
+There is a simple supervisor bash script available. For instructions, see:
 
 https://github.com/laelaps/symfony-gearman-bundle/issues/2#issuecomment-16257507
 
@@ -74,6 +81,13 @@ class ExampleWorker extends Worker
 ```
 
 ### Running worker
+
+Symfony Style Notation
+```
+$ ./app/console gearman:worker:run AcmeBundle:ExampleWorker
+```
+
+_Note that this would look for Acme\Bundle\AcmeBundle\Worker\ExampleWorker_
 
 ```
 $ ./app/console gearman:worker:run ./src/AcmeDemoBundle/Worker/ExampleWorker.php
