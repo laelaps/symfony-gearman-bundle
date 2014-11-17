@@ -39,6 +39,7 @@
       <th>Worker</th>
       <th>Priority</th>
       <th>Time (ms)</th>
+      <th>Request</th>
       <th>Response</th>
     </tr></thead>
     <tbody><tr>
@@ -46,6 +47,7 @@
       <td>{{ call.workload[0] }}</td>
       <td>{{ call.name }}</td>
       <td>{{ '%0.2f'|format(call.time * 1000) }}</td>
+      <td>{% if call.workload[1] is defined %}{{ call.workload[1] }}{% endif %}</td>
       <td>{{ call.result }}</td>
     {% endfor %}
     </tr></tbody>
