@@ -83,7 +83,7 @@ class RunWorkerCommand extends ContainerAwareCommand
             $workerFiles = glob($filename);
 
             if (empty($workerFiles)) {
-                throw new RuntimeException(sprintf('No filename matching "%s" glob pattern found.', $workerFilenamePattern));
+                throw new RuntimeException(sprintf('No filename matching "%s" glob pattern found.', $filename));
             }
 
             foreach ($workerFiles as $workerFilename) {
