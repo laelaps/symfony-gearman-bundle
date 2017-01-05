@@ -65,8 +65,14 @@ class LogClient
     {
         // Only store calls to do something.
         if (strpos($name, 'do') !== false) {
-            $start = microtime(true);
-            $result = $this->client->$name($arguments[0], $arguments[1]);
+            try {
+                $start = microtime(true);
+                $result = $this->client->$name($arguments[0], $arguments[1]);
+            } catch (\Exception $e) {
+                // Also log when Gearman trows for example GEARMAN_TIMEOUT reached.
+                $this->logCall($start, $name, $arguments, $e->getMessage());
+                throw $e;
+            }
             $this->logCall($start, $name, $arguments, $result);
         } elseif (count($arguments) == 1) {
             $result = $this->client->$name($arguments[0]);
