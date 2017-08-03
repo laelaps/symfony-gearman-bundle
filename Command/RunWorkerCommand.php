@@ -27,6 +27,12 @@ class RunWorkerCommand extends ContainerAwareCommand
      * @var boolean
      */
     protected $shouldStop = false;
+    
+    /**
+     *
+     * @var Worker[]
+     */
+    protected $workers = array();
 
     /**
      * @return void
@@ -36,6 +42,7 @@ class RunWorkerCommand extends ContainerAwareCommand
         $this->setName('gearman:worker:run')
             ->setDescription('Run given worker by filename.')
             ->addArgument(self::ARGUMENT_WORKER_FILENAME, InputArgument::REQUIRED, 'Worker filename. Wildcard "*" is allowed.')
+            ->addOption('timeout', 't', \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Timeout in mili seconds')
         ;
     }
 
@@ -92,7 +99,17 @@ class RunWorkerCommand extends ContainerAwareCommand
             }
         }
 
-        while (!$this->shouldStop && $gmworker->work()) {}
+        if ($timeout = $input->getOption('timeout')) {
+            $gmworker->setTimeout($timeout);
+        }
+        
+        while (!$this->shouldStop && ($gmworker->work() || $gmworker->returnCode() == GEARMAN_TIMEOUT)) {
+            if ($gmworker->returnCode() == GEARMAN_TIMEOUT) {
+                foreach ($this->workers as $worker) {
+                    $worker->doTimeout($output);
+                }
+            }
+        }
     }
 
     /**
@@ -198,6 +215,7 @@ class RunWorkerCommand extends ContainerAwareCommand
      */
     public function registerWorker(Worker $worker, GearmanWorker $gmworker, OutputInterface $output)
     {
+        $this->workers[] = $worker;
         $pointsOfEntry = $this->readPointsOfEntry($worker, $output);
         if (empty($pointsOfEntry)) {
             throw new RuntimeException(sprintf('No "PointOfEntry" annotations found in public methods of "%s".', get_class($worker)));

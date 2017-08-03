@@ -3,6 +3,7 @@
 namespace Laelaps\GearmanBundle;
 
 use LogicException;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -73,5 +74,14 @@ abstract class Worker implements ContainerAwareInterface
     public function setContainer(ContainerInterface $container = null)
     {
         $this->container = $container;
+    }
+    
+    /**
+     * Called when timeout is reached
+     * 
+     * @param OutputInterface $output
+     */
+    public function doTimeout(OutputInterface $output)
+    {
     }
 }
