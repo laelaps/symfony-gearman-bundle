@@ -1,6 +1,6 @@
 {
     "name": "laelaps/symfony-gearman-bundle",
-    "description": "Integrates Gearman into Symfony2",
+    "description": "Integrates Gearman into Symfony",
     "keywords": ["symfony", "gearman", "bundle"],
     "homepage": "https://github.com/laelaps/symfony-gearman-bundle",
     "type": "symfony-bundle",
@@ -19,8 +19,8 @@
     "require": {
         "ext-gearman": "*",
         "php": ">=5.3.0",
-        "symfony/console": "~2.1",
-        "symfony/framework-bundle": "~2.1"
+        "symfony/console": ">=2.1",
+        "symfony/framework-bundle": ">=2.1"
     },
     "autoload": {
         "psr-0": { "Laelaps\\GearmanBundle": "" }
