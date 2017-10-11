@@ -27,24 +27,19 @@ class LaelapsGearmanExtension extends Extension
             $loader->load('debug.yml');
         }
         
-        $servers = $config['servers'];
-        $container->setParameter('laelaps_gearman.servers', $servers);
+        $clientServer = $config['client_server'];
+        $workerServers = $config['worker_servers'];
+        $container->setParameter('laelaps_gearman.client_server', $clientServer);
+        $container->setParameter('laelaps_gearman.worker_servers', $workerServers);
 
-        /**
-         * Build container, if array, add multiple servers, if string add one
-         */
         $gearmanClientDefinition = $container->getDefinition('laelaps.gearman.client');
         $gearmanWorkerDefinition = $container->getDefinition('laelaps.gearman.worker');
-
-        if (is_array($servers)) {
-            foreach ($servers as $server) {
-                list($host, $port) = explode(':', $server);
-                $gearmanClientDefinition->addMethodCall('addServer', array($host, $port));
-                $gearmanWorkerDefinition->addMethodCall('addServer', array($host, $port));
-            }
-        } else {
-            $gearmanClientDefinition->addMethodCall('addServers', array($servers));
-            $gearmanWorkerDefinition->addMethodCall('addServers', array($servers));
+        list($host, $port) = explode(':', $clientServer);
+        $gearmanClientDefinition->addMethodCall('addServer', array($host, $port));
+        
+        foreach ($workerServers as $server) {
+            list($host, $port) = explode(':', $server);
+            $gearmanWorkerDefinition->addMethodCall('addServer', array($host, $port));
         }
     }
 }

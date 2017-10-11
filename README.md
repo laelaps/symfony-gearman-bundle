@@ -14,19 +14,20 @@
 
 ### config.yml
 
+We can configure one server for the client. Because only one is used. You need 
+load balancer if you would like to share the load over multiple Gearman servers.
+
+We can configure multiple servers for the workers. Because they do look for 
+work on all configured Gearman servers.
+
+![Gearman cluster](http://gearman.org/img/cluster.png)
+
 ``` yaml
 laelaps_gearman:
-    servers:
+    client_server: localhost:4730
+    worker_servers:
         - localhost:4730
 ```
-
-OR
-
-``` yaml
-laelaps_gearman:
-    servers: "localhost:4730,localhost:4731"
-```
-
 
 ### app/AppKernel.php
 

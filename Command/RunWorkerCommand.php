@@ -105,10 +105,22 @@ class RunWorkerCommand extends ContainerAwareCommand
         
         while (!$this->shouldStop && ($gmworker->work() || $gmworker->returnCode() == GEARMAN_TIMEOUT)) {
             if ($gmworker->returnCode() == GEARMAN_TIMEOUT) {
-                foreach ($this->workers as $worker) {
-                    $worker->doTimeout($output);
-                }
+                $this->allWorkersTimeout($output);
+            } elseif ($gmworker->returnCode() != GEARMAN_SUCCESS) {
+                $this->allWorkersTimeout($output);
+                $output->writeln("<error>Gearman work failed with error code {$gmworker->returnCode()}: ". $gmworker->getErrno(). "</error>");
+//                throw new RuntimeException("Gearman work failed with error code {$gmworker->returnCode()}: ", $gmworker->getErrno());
             }
+        }
+    }
+    
+    /**
+     * Run all Workers timeout
+     * @param OutputInterface $output
+     */
+    protected function allWorkersTimeout(OutputInterface $output) {
+        foreach ($this->workers as $worker) {
+            $worker->doTimeout($output);
         }
     }
 

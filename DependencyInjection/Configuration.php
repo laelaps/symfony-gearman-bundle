@@ -2,6 +2,7 @@
 
 namespace Laelaps\GearmanBundle\DependencyInjection;
 
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -20,15 +21,37 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('laelaps_gearman');
 
-        // Here you should define the parameters that are allowed to
-        // configure your bundle. See the documentation linked above for
-        // more information on that topic.
-
-        $rootNode
-            ->children()
-                ->variableNode('servers')->isRequired()->cannotBeEmpty()->end()
-            ->end();
+        $this->addClientServer($rootNode);
+        $this->addWorkerServers($rootNode);
 
         return $treeBuilder;
+    }
+    
+    /**
+     * Add client server. Client will only connect to on server
+     * 
+     * laelaps_gearman:
+     *     client_server: <host:port>
+     * 
+     * @param ArrayNodeDefinition $node
+     */
+    private function addClientServer(ArrayNodeDefinition $node)
+    {
+        $node->children()->scalarNode('client_server')->isRequired()->cannotBeEmpty()->end();
+    }
+    
+    /**
+     * Adds worker servers. Workers can connect to more then one server.
+     * 
+     * laelaps_gearman:
+     *     worker_servers:
+     *       - <host1:port>
+     *       - <host2:port>
+     * 
+     * @param ArrayNodeDefinition $node
+     */
+    private function addWorkerServers(ArrayNodeDefinition $node)
+    {
+        $node->children()->arrayNode('worker_servers')->prototype('scalar')->isRequired()->cannotBeEmpty()->end();
     }
 }
