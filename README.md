@@ -130,3 +130,76 @@ $ ./app/console gearman:job:run example_job_name
 ```
 $ ./app/console gearman:job:run example_job_name optional_workload_string
 ```
+
+
+
+### Consumer (alternative implementation for Worker)
+
+As an alternative to the Worker implementation, there is
+a Consumer-Handler implementation.
+
+place jobs on the queue with:
+``` php
+<?php
+$gearman->doBackground('queueName', serialize($workload));
+
+```
+
+write a handler like:
+
+``` php
+<?php
+
+namespace AcmeDemoBundle\Worker;
+
+use Laelaps\GearmanBundle\Worker\HandlerInterface;
+use Psr\Log\LoggerInterface;
+
+class ConsumerHandler implements HandlerInterface
+{
+    /** @var LoggerInterface */
+    protected $logger;
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function handle($message)
+    {
+        try {
+            $workload = unserialize($message);
+            echo $workload;
+        } catch (Exception $e) {
+            $this->logger->error(sprintf("%s: %s", static::class, $e->getMessage()));
+
+            return false;
+        }
+
+        return true;
+    }
+}
+```
+
+And add this class to your service container with a tag:
+
+``` yaml
+    acme.worker.consumer_handler:
+        class: AcmeDemoBundle\Worker\ConsumerHandler
+        arguments:
+            - "@logger"
+        tags:
+            - { name: laelaps.handler, queue_name: 'queueName'}
+```
+
+and run it with:
+
+```
+$ ./app/console gearman:consumer:queueName
+```

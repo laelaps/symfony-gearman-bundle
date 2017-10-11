@@ -4,3 +4,12 @@ services:
     laelaps.gearman.worker:
         class: GearmanWorker
         scope: prototype
+
+    laelaps.command.abstract_consumer:
+        class: Laelaps\GearmanBundle\Command\ConsumerCommand
+        shared: false
+        scope: prototype
+        abstract: true
+        arguments:
+            - "@laelaps.gearman.worker"
+            - "@logger"
