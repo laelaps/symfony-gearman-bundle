@@ -2,15 +2,12 @@
 
 namespace Laelaps\GearmanBundle\Command;
 
-use Laelaps\GearmanBundle\Event\ConsumeEvents;
 use Laelaps\GearmanBundle\Worker\HandlerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class ConsumerCommand extends Command
 {
@@ -45,8 +42,8 @@ class ConsumerCommand extends Command
         \GearmanWorker $gmworker,
         LoggerInterface $logger,
         HandlerInterface $handler,
-        string $queueName,
-        string $name
+        $queueName,
+        $name
     ) {
         parent::__construct($name);
 
