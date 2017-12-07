@@ -1,5 +1,9 @@
 # Symfony Gearman Bundle
 
+Wrapper for Gearman so that you get command lines tools and can use annotation in Symfony.
+
+Also supports the Symfony web profiling toolbar integration.
+
 ## Installation
 
 ### composer.json
