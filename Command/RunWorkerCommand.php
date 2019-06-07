@@ -143,7 +143,7 @@ class RunWorkerCommand extends ContainerAwareCommand
      */
     public function stopAllProcesses() {
         $this->shouldStop = true;
-        $this->output->write("<info>Stop signal received. Calling timeout and stop process.</info>");
+        $this->output->writeln("<info>Stop signal received. Calling timeout and stop process.</info>");
         $this->allWorkersTimeout($this->output);
     }
     
