@@ -35,6 +35,12 @@ class RunWorkerCommand extends ContainerAwareCommand
     protected $workers = array();
 
     /**
+     *
+     * @var OutputInterface
+     */
+    protected $output;
+
+    /**
      * @return void
      */
     protected function configure()
@@ -42,8 +48,26 @@ class RunWorkerCommand extends ContainerAwareCommand
         $this->setName('gearman:worker:run')
             ->setDescription('Run given worker by filename.')
             ->addArgument(self::ARGUMENT_WORKER_FILENAME, InputArgument::REQUIRED, 'Worker filename. Wildcard "*" is allowed.')
-            ->addOption('timeout', 't', \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Timeout in mili seconds')
+            ->addOption('timeout', 't', \Symfony\Component\Console\Input\InputOption::VALUE_OPTIONAL, 'Timeout in mili seconds', 10000)
         ;
+    }
+
+    /**
+     * @see Symfony\Component\Console\Command\Command::run()
+     */
+    public function run(InputInterface $input, OutputInterface $output) {
+        // Add the signal handler
+        if (function_exists('pcntl_signal')) {
+            // Enable ticks for fast signal processing
+            declare(ticks=1);
+            $this->output = $output;
+            pcntl_signal(SIGTERM, array($this, 'stopAllProcesses'));
+            pcntl_signal(SIGINT, array($this, 'stopAllProcesses'));
+            pcntl_signal(SIGQUIT, array($this, 'stopAllProcesses'));
+        }
+
+        // And now run the command
+        return parent::run($input, $output);
     }
 
     /**
@@ -112,6 +136,15 @@ class RunWorkerCommand extends ContainerAwareCommand
 //                throw new RuntimeException("Gearman work failed with error code {$gmworker->returnCode()}: ", $gmworker->getErrno());
             }
         }
+    }
+
+    /**
+     * Stop all processes
+     */
+    public function stopAllProcesses() {
+        $this->shouldStop = true;
+        $this->output->write("<info>Stop signal received. Calling timeout and stop process.</info>");
+        $this->allWorkersTimeout($this->output);
     }
     
     /**
